@@ -3,30 +3,152 @@
 #include <cstring>
 #include <stack>
 #include <queue>
-#include <vector>
 #include <map>
-#include <set>
+#include <ctime>
 
 using namespace std;
+
+int NID = 0;
+int DID = 0;
+int LID = 0;
+
+template <typename T>
+struct vect{
+    T dt[200];
+    int data;
+
+    vect()
+    {
+        data = 0;
+        memset((void*)dt,0,sizeof(dt));
+    }
+
+    int size()
+    {
+        return data;
+    }
+
+    int push(T ins)
+    {
+        if(data == 200)
+            return 0;
+        dt[data++] = ins;
+        return 1;
+    }
+};
+
+template <typename T>
+struct labelset{
+    int id;
+    T dt[200];
+    int data;
+
+	labelset()
+    {
+        data = 0;
+        memset((void*)dt,-1,sizeof(dt));
+    }
+
+    labelset(int _id)
+    {
+        id = _id;
+        data = 0;
+        memset((void*)dt,-1,sizeof(dt));
+    }
+
+    bool operator==(const labelset &o) const
+	{
+		if(o.data==data)
+		{
+			for(int i=0;i<data;i++)
+			{
+				if(o.dt[i]!=dt[i])
+				{
+					return false;
+				}
+			}
+		}
+		else
+		{
+			return false;
+		}
+		return true;
+    }
+
+    bool operator<(const labelset &o) const
+	{
+		int iter = min(o.data, data);
+        if(data < o.data)
+			return true;
+		if(data == o.data)
+			for(int i=0;i<iter;i++)
+			{
+				if(dt[i]<o.dt[i]) return true;
+			}
+		return false;
+    }
+
+    int push(T ins)
+    {
+        bool exists=false;
+        for(int i=0;i<data;i++)
+        {
+            if(ins == dt[i])
+            {
+                exists = true;
+            }
+        }
+
+        if (exists)
+            return 0;
+        dt[data++] = ins;
+		sort(dt,dt+data);
+		return 1;
+    }
+
+    int count(T ins)
+    {
+        bool exists=false;
+        for(int i=0;i<data;i++)
+        {
+            if(ins == dt[i])
+            {
+                exists = true;
+            }
+        }
+        if (exists)
+            return 1;
+        return 0;
+    }
+
+    int size()
+    {
+        return data;
+    }
+
+    void clear()
+    {
+        labelset();
+    }
+
+};
 
 class NFA_VERTEX;
 class DFA_VERTEX;
 class NFA_TRACER;
 
-set<int> Move(set<int>, char);
-set<int> Eps_Move(set<int>);
-
-int NID = 0;
-int DID = 0;
+labelset<int>* Move(labelset<int>*, char);
+labelset<int>* Eps_Move(labelset<int>*);
 
 map<int, NFA_VERTEX*> NFA_GRAPH;
-map<set<int>, DFA_VERTEX*> DFA_GRAPH;
+map<labelset<int>, DFA_VERTEX*> DFA_GRAPH;
+
 
 class NFA_VERTEX
 {
 public:
     int id;
-	vector<NFA_VERTEX*> next[3];
+	vect<NFA_VERTEX*> next[3];
 
 	NFA_VERTEX()
 	{
@@ -40,7 +162,7 @@ public:
 		{
 			for(int j=0;j<next[i].size();j++)
 			{
-				delete next[i][j];
+				delete next[i].dt[j];
 			}
 		}
 	}
@@ -51,7 +173,7 @@ public:
 		{
 			for(int j=0;j<next[i].size();j++)
 			{
-				printf("%d -> %d [label=\"%c\"];\n", this->id, next[i][j]->id, (i!=2 ? i+'a':'e'));
+				printf("%d -> %d [label=\"%c\"];\n", this->id, next[i].dt[j]->id, (i!=2 ? i+'a':'e'));
 			}
 		}
 		if(this->id == id)
@@ -66,14 +188,18 @@ class DFA_VERTEX
 public:
     int id;
 	DFA_VERTEX* next[2];
-	set<int> label;
+	labelset<int>* label;
 
-	DFA_VERTEX(set<int> _label)
+	DFA_VERTEX(labelset<int>* _label)
 	{
 		id=DID++;
 		next[0] = next[1] = NULL;
-		label = _label;
-		DFA_GRAPH[_label] = this;
+		label = new labelset<int>(DID);
+		for(int i=0;i<_label->data;i++)
+		{
+			label->push(_label->dt[i]);
+		}
+		DFA_GRAPH[*_label] = this;
 	}
 
 	~DFA_VERTEX()
@@ -90,7 +216,7 @@ public:
 
     void Debug(int id)
 	{
-		if(label.count(id))
+		if(label->count(id))
 		{
 			printf("%d [shape=\"doublecircle\"]\n", this->id);
 		}
@@ -122,42 +248,47 @@ class NFA_TRACER
 	}
 };
 
-set<int> Move(set<int> node, int character)
+labelset<int>* Move(labelset<int>* node, int character)
 {
-    set<int>::iterator it;
-    set<int> result;
-    for( it=node.begin(); it!=node.end(); it++)
+    labelset<int>* result = new labelset<int>();
+    NFA_VERTEX* tmp;
+    for( int i=0; i<node->data; i++)
     {
-        NFA_VERTEX* tmp = NFA_GRAPH[*it];
+        tmp = NFA_GRAPH[node->dt[i]];
         for(int i=0;i<tmp->next[character].size();i++)
         {
-            result.insert(tmp->next[character][i]->id);
+            result->push(tmp->next[character].dt[i]->id);
         }
     }
     return result;
 }
 
-set<int> EpsMove(set<int> node)
+labelset<int>* EpsMove(labelset<int>* node)
 {
     stack<int> nodes;
-    set<int> result = node;
-    set<int>::iterator it;
-    for( it=node.begin(); it!=node.end();it++)
+    labelset<int>* result = new labelset<int>();
+	for(int i=0;i<node->data;i++)
+	{
+		result->push(node->dt[i]);
+	}
+    NFA_VERTEX* tmp;
+    NFA_VERTEX* tmp2;
+    for( int i=0; i < node->data;i++)
     {
-        nodes.push(*it);
+        nodes.push(node->dt[i]);
     }
     while(nodes.empty() == false)
     {
         int t = nodes.top();
         nodes.pop();
-        NFA_VERTEX* tmp = NFA_GRAPH[t];
+        tmp = NFA_GRAPH[t];
         for(int i=0; i<tmp->next[2].size(); i++)
         {
-            NFA_VERTEX* cur = tmp->next[2][i];
-            if(result.count(cur->id) == 0)
+            tmp2 = tmp->next[2].dt[i];
+            if(result->count(tmp2->id) == 0)
             {
-                result.insert(cur->id);
-                nodes.push(cur->id);
+                result->push(tmp2->id);
+                nodes.push(tmp2->id);
             }
         }
     }
@@ -166,7 +297,7 @@ set<int> EpsMove(set<int> node)
 
 NFA_TRACER* OpConcat(NFA_TRACER* r, NFA_TRACER* s)
 {
-    r->finish->next[2].push_back(s->start);
+    r->finish->next[2].push(s->start);
     return new NFA_TRACER(r->start, s->finish);
 }
 
@@ -175,25 +306,25 @@ NFA_TRACER* OpUnion(NFA_TRACER* r, NFA_TRACER* s)
     NFA_VERTEX* first = new NFA_VERTEX();
     NFA_VERTEX* second = new NFA_VERTEX();
 
-    first->next[2].push_back(r->start);
-    first->next[2].push_back(s->start);
-    s->finish->next[2].push_back(second);
-    r->finish->next[2].push_back(second);
+    first->next[2].push(r->start);
+    first->next[2].push(s->start);
+    s->finish->next[2].push(second);
+    r->finish->next[2].push(second);
     return new NFA_TRACER(first,second);
 }
 
 NFA_TRACER* OpStar(NFA_TRACER* r)
 {
     NFA_VERTEX* ed = new NFA_VERTEX();
-    ed->next[2].push_back(r->start);
-    r->finish->next[2].push_back(ed);
+    ed->next[2].push(r->start);
+    r->finish->next[2].push(ed);
     return new NFA_TRACER(ed,ed);
 }
 
-DFA_VERTEX* AddToGraph(set<int> _label)
+DFA_VERTEX* AddToGraph(labelset<int>* _label)
 {
-	if(DFA_GRAPH.count(_label) == 1)
-		return DFA_GRAPH[_label];
+	if(DFA_GRAPH.count(*_label) == 1)
+		return DFA_GRAPH[*_label];
 
     DFA_VERTEX* tmp = new DFA_VERTEX(_label);
     return tmp;
@@ -251,6 +382,7 @@ long long** ExpMatrix(long long** awal, int exp)
 
 int main()
 {
+    clock_t begin = clock();
     // Untuk Input
     char in[121], regexp[222];
     int test, len, N;
@@ -264,6 +396,7 @@ int main()
     	// Initialize variables.
     	NID = 0;
     	DID = 0;
+    	LID = 0;
     	NFA_GRAPH.clear();
     	DFA_GRAPH.clear();
 
@@ -293,7 +426,7 @@ int main()
             {
             	NFA_VERTEX* first = new NFA_VERTEX();
           		NFA_VERTEX* second = new NFA_VERTEX();
-          		first->next[regexp[i]-'a'].push_back(second);
+          		first->next[regexp[i]-'a'].push(second);
           		NFA_TRACER* state = new NFA_TRACER(first, second);
           		states.push(state);
             }
@@ -340,31 +473,32 @@ int main()
 
         NFA_VERTEX* start = finalNFA->start;
         NFA_VERTEX* finish = finalNFA->finish;
-        set<int> initNode;
-        set<int> visited;
+		labelset<int>* initNode = new labelset<int>();
+		labelset<int>* visited = new labelset<int>();
 
-        initNode.insert(start->id);
+        initNode->push(start->id);
         initNode = EpsMove(initNode);
-
 
         // Create DFA from NFA
         DFA_VERTEX* initDFA = AddToGraph(initNode);
-
+		visited->push(initDFA->id);
         queue<DFA_VERTEX*> qu;
         qu.push(initDFA);
+        DFA_VERTEX* tmp;
+        labelset<int>* ret;
         while(qu.empty() == false)
         {
             DFA_VERTEX* dv = qu.front();
             qu.pop();
             for(int i=0; i<2; i++)
             {
-                set<int> ret = EpsMove(Move(dv->label,i));
-                if(ret.empty() == true) continue;
-                DFA_VERTEX* tmp = AddToGraph(ret);
+                ret = EpsMove(Move((dv->label),i));
+                if(ret->data == 0) continue;
+                tmp = AddToGraph(ret);
                 dv->next[i] = tmp;
-                if(visited.count(tmp->id) == 0)
+                if(visited->count(tmp->id) == 0)
                 {
-                    visited.insert(tmp->id);
+                    visited->push(tmp->id);
                     qu.push(tmp);
                 }
             }
@@ -378,10 +512,10 @@ int main()
             adjMatrix[i] = (long long*)calloc(DID, sizeof(long long));
         }
 
-		map<set<int>, DFA_VERTEX*>::iterator it_dfa;
+		map<labelset<int>, DFA_VERTEX*>::iterator it_dfa;
 		map<int, NFA_VERTEX*>::iterator it_nfa;
 
-//////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////
 //Debugging
 //		puts("\nnfa");
 //		for(it_nfa = NFA_GRAPH.begin(); it_nfa!=NFA_GRAPH.end();it_nfa++)
@@ -393,8 +527,7 @@ int main()
 //		{
 //			it_dfa->second->Debug(finish->id);
 //		}
-
-////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////
 		for(it_dfa = DFA_GRAPH.begin(); it_dfa!=DFA_GRAPH.end(); it_dfa++)
         {
             DFA_VERTEX* dv = it_dfa->second;
@@ -412,13 +545,17 @@ int main()
         long long hasil = 0;
         for(it_dfa=DFA_GRAPH.begin();it_dfa != DFA_GRAPH.end(); it_dfa++)
         {
-            if(it_dfa->second->label.count(finish->id))
+            if(it_dfa->second->label->count(finish->id))
             {
                 hasil += res[0][it_dfa->second->id];
             }
         }
         printf("%lld\n", hasil%1000000007);
     }
+    clock_t end = clock();
+    double timeSec = (end - begin) / static_cast<double>( CLOCKS_PER_SEC );
+
+    printf("elapsed time = %lf\n", timeSec);
     return 0;
 }
 
