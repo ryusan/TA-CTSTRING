@@ -184,10 +184,14 @@ NFA_TRACER* OpUnion(NFA_TRACER* r, NFA_TRACER* s)
 
 NFA_TRACER* OpStar(NFA_TRACER* r)
 {
-    NFA_VERTEX* ed = new NFA_VERTEX();
-    ed->next[2].push_back(r->start);
-    r->finish->next[2].push_back(ed);
-    return new NFA_TRACER(ed,ed);
+    NFA_VERTEX* first = new NFA_VERTEX();
+    NFA_VERTEX* second = new NFA_VERTEX();
+
+    first->next[2].push_back(r->start);
+    first->next[2].push_back(second);
+    r->finish->next[2].push_back(r->start);
+    r->finish->next[2].push_back(second);
+    return new NFA_TRACER(first,second);
 }
 
 DFA_VERTEX* AddToGraph(set<int> _label)
@@ -252,7 +256,7 @@ long long** ExpMatrix(long long** awal, int exp)
 int main()
 {
     // Untuk Input
-    char in[121], regexp[222];
+    char in[101], regexp[202];
     int test, len, N;
 
     //
@@ -274,7 +278,7 @@ int main()
         int iter=0;
         for(int i=0;i<len; i++)
         {
-            if(i!=0 && ( in[i]=='(' || in[i]=='a' || in[i] == 'b')
+            if(i && ( in[i]=='(' || in[i]=='a' || in[i] == 'b')
                      && (in[i-1]==')' || in[i-1]=='a' || in[i-1]=='b'))
             {
                 regexp[iter++]='+';
@@ -369,6 +373,22 @@ int main()
                 }
             }
         }
+        map<set<int>, DFA_VERTEX*>::iterator it_dfa;
+		map<int, NFA_VERTEX*>::iterator it_nfa;
+//////////////////////////////////////////////////////////////////////////////////////////
+//Debugging
+		puts("\nnfa");
+		for(it_nfa = NFA_GRAPH.begin(); it_nfa!=NFA_GRAPH.end();it_nfa++)
+		{
+			it_nfa->second->Debug(finish->id);
+		}
+		puts("\ndfa");
+		for(it_dfa = DFA_GRAPH.begin(); it_dfa!=DFA_GRAPH.end();it_dfa++)
+		{
+			it_dfa->second->Debug(finish->id);
+		}
+
+////////////////////////////////////////////////////////////////////////////////////////
 
         // Create adjacency matrix from DFA Graph.
         long long** adjMatrix;
@@ -377,27 +397,10 @@ int main()
         {
             adjMatrix[i] = (long long*)calloc(DID, sizeof(long long));
         }
-
-		map<set<int>, DFA_VERTEX*>::iterator it_dfa;
-		map<int, NFA_VERTEX*>::iterator it_nfa;
-
-//////////////////////////////////////////////////////////////////////////////////////////
-//Debugging
-//		puts("\nnfa");
-//		for(it_nfa = NFA_GRAPH.begin(); it_nfa!=NFA_GRAPH.end();it_nfa++)
-//		{
-//			it_nfa->second->Debug(finish->id);
-//		}
-//		puts("\ndfa");
-//		for(it_dfa = DFA_GRAPH.begin(); it_dfa!=DFA_GRAPH.end();it_dfa++)
-//		{
-//			it_dfa->second->Debug(finish->id);
-//		}
-
-////////////////////////////////////////////////////////////////////////////////////////
-		for(it_dfa = DFA_GRAPH.begin(); it_dfa!=DFA_GRAPH.end(); it_dfa++)
+        map<set<int>, DFA_VERTEX*>::iterator it;
+        for(it = DFA_GRAPH.begin(); it!=DFA_GRAPH.end(); it++)
         {
-            DFA_VERTEX* dv = it_dfa->second;
+            DFA_VERTEX* dv = it->second;
             for(int i=0;i<2;i++)
             {
                 DFA_VERTEX* dv2 = dv->next[i];
@@ -407,17 +410,17 @@ int main()
                 }
             }
         }
-
-        long long** res = ExpMatrix(adjMatrix, N);
-        long long hasil = 0;
-        for(it_dfa=DFA_GRAPH.begin();it_dfa != DFA_GRAPH.end(); it_dfa++)
+        long long** res;
+        res = ExpMatrix(adjMatrix, N);
+        long long hasil=0;
+        for(it=DFA_GRAPH.begin();it != DFA_GRAPH.end(); it++)
         {
-            if(it_dfa->second->label.count(finish->id))
+            if(it->second->label.count(finish->id))
             {
-                hasil += res[0][it_dfa->second->id];
+                hasil += res[0][it->second->id];
             }
         }
-        printf("%lld\n", hasil%1000000007);
+        printf("%lld\n", hasil);
     }
     return 0;
 }
@@ -432,3 +435,5 @@ int main()
 //    printf("\n");
 //}
 //printf("\n");
+
+
