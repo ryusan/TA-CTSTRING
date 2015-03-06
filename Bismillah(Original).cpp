@@ -6,6 +6,7 @@
 #include <vector>
 #include <map>
 #include <set>
+#include <ctime>
 
 using namespace std;
 
@@ -255,8 +256,10 @@ long long** ExpMatrix(long long** awal, int exp)
 
 int main()
 {
+
+    clock_t begin = clock();
     // Untuk Input
-    char in[101], regexp[202];
+    char in[151], regexp[252];
     int test, len, N;
 
     //
@@ -377,16 +380,16 @@ int main()
 		map<int, NFA_VERTEX*>::iterator it_nfa;
 //////////////////////////////////////////////////////////////////////////////////////////
 //Debugging
-		puts("\nnfa");
-		for(it_nfa = NFA_GRAPH.begin(); it_nfa!=NFA_GRAPH.end();it_nfa++)
-		{
-			it_nfa->second->Debug(finish->id);
-		}
-		puts("\ndfa");
-		for(it_dfa = DFA_GRAPH.begin(); it_dfa!=DFA_GRAPH.end();it_dfa++)
-		{
-			it_dfa->second->Debug(finish->id);
-		}
+//		puts("\nnfa");
+//		for(it_nfa = NFA_GRAPH.begin(); it_nfa!=NFA_GRAPH.end();it_nfa++)
+//		{
+//			it_nfa->second->Debug(finish->id);
+//		}
+//		puts("\ndfa");
+//		for(it_dfa = DFA_GRAPH.begin(); it_dfa!=DFA_GRAPH.end();it_dfa++)
+//		{
+//			it_dfa->second->Debug(finish->id);
+//		}
 
 ////////////////////////////////////////////////////////////////////////////////////////
 
@@ -420,8 +423,13 @@ int main()
                 hasil += res[0][it->second->id];
             }
         }
-        printf("%lld\n", hasil);
+        printf("%lld\n", hasil % 1000000007);
     }
+
+    clock_t end = clock();
+    double timeSec = (end - begin) / static_cast<double>( CLOCKS_PER_SEC );
+
+    printf("elapsed time = %lf\n", timeSec);
     return 0;
 }
 

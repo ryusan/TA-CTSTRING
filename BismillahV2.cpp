@@ -1,39 +1,40 @@
 #include <cstdio>
 #include <algorithm>
 #include <cstring>
-#include <stack>
-#include <queue>
-#include <map>
 #include <ctime>
+#include <map>
+#include <queue>
 
 using namespace std;
 
 int NID = 0;
 int DID = 0;
-int LID = 0;
 
 template <typename T>
 struct vect{
     T dt[200];
     int data;
 
+	// init new vector
     vect()
     {
         data = 0;
-        memset((void*)dt,0,sizeof(dt));
     }
 
+	// return vector size
     int size()
     {
         return data;
     }
 
-    int push(T ins)
+	// add new element to vector
+	// if vector full ret 0, if succes return 1
+    bool push(T ins)
     {
         if(data == 200)
-            return 0;
+            return false;
         dt[data++] = ins;
-        return 1;
+        return true;
     }
 };
 
@@ -43,19 +44,21 @@ struct labelset{
     T dt[200];
     int data;
 
+	// initialize label without id
 	labelset()
     {
         data = 0;
-        memset((void*)dt,-1,sizeof(dt));
     }
 
+	// initialize label with id
     labelset(int _id)
     {
         id = _id;
         data = 0;
-        memset((void*)dt,-1,sizeof(dt));
     }
 
+	// struct comparator with '==' operator
+	// if dt equal return true, else return false
     bool operator==(const labelset &o) const
 	{
 		if(o.data==data)
@@ -75,7 +78,11 @@ struct labelset{
 		return true;
     }
 
-    bool operator<(const labelset &o) const
+	// struct comparator with '==' operator
+    // if |data| < cmp.|data| ret true;
+	// if data[i] < cmp.data[i] ret true;
+	// else ret false;
+	bool operator<(const labelset &o) const
 	{
 		int iter = min(o.data, data);
         if(data < o.data)
@@ -88,39 +95,39 @@ struct labelset{
 		return false;
     }
 
-    int push(T ins)
+	// insert new element to label
+	// check for duplicates and sort the element after insert
+	// if exists ret 0, else return 1
+    bool push(T ins)
     {
-        bool exists=false;
         for(int i=0;i<data;i++)
         {
             if(ins == dt[i])
             {
-                exists = true;
+                return false;
             }
         }
 
-        if (exists)
-            return 0;
         dt[data++] = ins;
 		sort(dt,dt+data);
-		return 1;
+		return true;
     }
 
-    int count(T ins)
+	// check element in label
+	// if exists return 1, else return 0
+    bool count(T ins)
     {
-        bool exists=false;
         for(int i=0;i<data;i++)
         {
             if(ins == dt[i])
             {
-                exists = true;
+                return true;
             }
         }
-        if (exists)
-            return 1;
-        return 0;
+        return false;
     }
 
+	// return how much nodes in label
     int size()
     {
         return data;
@@ -133,9 +140,64 @@ struct labelset{
 
 };
 
+template <typename T>
+struct stack
+{
+	T dt[300];
+	int ptr;
+
+	// initialize stack
+	stack()
+	{
+		ptr = -1;
+	}
+
+	// 1 if succes, 0 if full
+	bool push(T ins)
+	{
+		if(ptr+1 < 200)
+		{
+			dt[++ptr] = ins;
+			return true;
+		}
+		return false;
+	}
+
+	// 1 if succes, 0 if fail
+	bool pop()
+	{
+		if(ptr >= 0)
+		{
+			dt[ptr--] = 0;
+			return true;
+		}
+		return false;
+
+	}
+
+	// T if succes, NULL if empty stack
+	T top()
+	{
+		return dt[ptr];
+	}
+
+	// stack size
+	int size()
+	{
+		return ptr;
+	}
+
+	// check wether stack is empty
+	bool empty()
+	{
+		return ptr == -1;
+	}
+};
+
 class NFA_VERTEX;
 class DFA_VERTEX;
 class NFA_TRACER;
+
 
 labelset<int>* Move(labelset<int>*, char);
 labelset<int>* Eps_Move(labelset<int>*);
@@ -192,13 +254,14 @@ public:
 
 	DFA_VERTEX(labelset<int>* _label)
 	{
-		id=DID++;
+		id=DID;
 		next[0] = next[1] = NULL;
 		label = new labelset<int>(DID);
 		for(int i=0;i<_label->data;i++)
 		{
 			label->push(_label->dt[i]);
 		}
+		_label->id = DID++;
 		DFA_GRAPH[*_label] = this;
 	}
 
@@ -354,7 +417,6 @@ long long** MatrixMul(long long** y, long long** z)
 
 long long** ExpMatrix(long long** awal, int exp)
 {
-    int a, b;
     long long** x;
     x = (long long**)calloc(DID, sizeof(long long*));
     for(int i=0;i<DID;i++)
@@ -396,7 +458,6 @@ int main()
     	// Initialize variables.
     	NID = 0;
     	DID = 0;
-    	LID = 0;
     	NFA_GRAPH.clear();
     	DFA_GRAPH.clear();
 
@@ -476,6 +537,23 @@ int main()
 		labelset<int>* initNode = new labelset<int>();
 		labelset<int>* visited = new labelset<int>();
 
+		map<labelset<int>, DFA_VERTEX*>::iterator it_dfa;
+		map<int, NFA_VERTEX*>::iterator it_nfa;
+
+////////////////////////////////////////////////////////////////////////////////////////
+//Debugging
+//		puts("\nnfa");
+//		for(it_nfa = NFA_GRAPH.begin(); it_nfa!=NFA_GRAPH.end();it_nfa++)
+//		{
+//			it_nfa->second->Debug(finish->id);
+//		}
+//		puts("\ndfa");
+//		for(it_dfa = DFA_GRAPH.begin(); it_dfa!=DFA_GRAPH.end();it_dfa++)
+//		{
+//			it_dfa->second->Debug(finish->id);
+//		}
+//////////////////////////////////////////////////////////////////////////////////////
+
         initNode->push(start->id);
         initNode = EpsMove(initNode);
 
@@ -512,8 +590,8 @@ int main()
             adjMatrix[i] = (long long*)calloc(DID, sizeof(long long));
         }
 
-		map<labelset<int>, DFA_VERTEX*>::iterator it_dfa;
-		map<int, NFA_VERTEX*>::iterator it_nfa;
+//		map<labelset<int>, DFA_VERTEX*>::iterator it_dfa;
+//		map<int, NFA_VERTEX*>::iterator it_nfa;
 
 ////////////////////////////////////////////////////////////////////////////////////////
 //Debugging
@@ -550,12 +628,12 @@ int main()
                 hasil += res[0][it_dfa->second->id];
             }
         }
-        printf("%lld\n", hasil%1000000007);
+        printf("%I64d\n", hasil%1000000007);
     }
     clock_t end = clock();
     double timeSec = (end - begin) / static_cast<double>( CLOCKS_PER_SEC );
+    printf("elapsed time = %f\n", timeSec);
 
-    printf("elapsed time = %lf\n", timeSec);
     return 0;
 }
 
