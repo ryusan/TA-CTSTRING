@@ -5,14 +5,17 @@
 #include <map>
 #include <queue>
 
+#define MOD 1000000007
+
 using namespace std;
+
 
 int NID = 0;
 int DID = 0;
 
 template <typename T>
 struct vect{
-    T dt[101];
+    T dt[5];
     int data;
 
 	// init new vector
@@ -31,7 +34,7 @@ struct vect{
 	// if vector full ret 0, if succes return 1
     bool push(T ins)
     {
-        if(data == 101)
+        if(data == 20)
             return false;
         dt[data++] = ins;
         return true;
@@ -40,8 +43,8 @@ struct vect{
 
 template <typename T>
 struct labelset{
-    int hash_id;
-    T dt[66];
+    unsigned long long hash_id;
+    T dt[101];
     int data;
 
 	// initialize label without id
@@ -89,10 +92,9 @@ struct labelset{
     void CalculateHash()
     {
         hash_id = 0;
-        int tmp;
         for(int i=0;i<data;i++)
         {
-            hash_id += dt[i]*((i+1)*10);
+            hash_id=hash_id*17+dt[i];
         }
     }
 
@@ -126,7 +128,7 @@ struct labelset{
 template <typename T>
 struct stack
 {
-	T dt[101];
+	T dt[181];
 	int ptr;
 
 	// initialize stack
@@ -138,7 +140,7 @@ struct stack
 	// 1 if succes, 0 if full
 	bool push(T ins)
 	{
-		if(ptr+1 < 101)
+		if(ptr+1 < 181)
 		{
 			dt[++ptr] = ins;
 			return true;
@@ -354,10 +356,14 @@ void OpUnion(NFA_TRACER &r, NFA_TRACER &s)
 
 void OpStar(NFA_TRACER &r)
 {
+    NFA_VERTEX* st = new NFA_VERTEX();
     NFA_VERTEX* ed = new NFA_VERTEX();
-    ed->next[2].push(r.start);
+
+    st->next[2].push(r.start);
+    st->next[2].push(ed);
+    r.finish->next[2].push(r.start);
     r.finish->next[2].push(ed);
-    states.push(new NFA_TRACER(ed,ed));
+    states.push(new NFA_TRACER(st,ed));
 }
 
 DFA_VERTEX* AddToGraph(labelset<int> _label)
@@ -383,7 +389,7 @@ long long** MatrixMul(long long** y, long long** z)
         {
             for(int c=0;c<DID;c++)
             {
-                x[a][b]=(x[a][b]+((y[a][c])*(z[c][b])))%1000000007;
+                x[a][b]=(x[a][b]+((y[a][c])*(z[c][b])))%MOD;
             }
         }
     }
@@ -447,19 +453,18 @@ int main()
         int iter=0;
         for(int i=0;i<len; i++)
         {
-            if(i!=0 && ( in[i]=='(' || in[i]=='a' || in[i] == 'b')
-                     && (in[i-1]==')' || in[i-1]=='a' || in[i-1]=='b'))
+            if(i!=0 && ( in[i]=='(' || in[i]=='a' || in[i] == 'b') && (in[i-1]==')' || in[i-1]=='a' || in[i-1]=='b'))
             {
                 regexp[iter++]='+';
             }
             regexp[iter++]=in[i];
         }
         regexp[iter]=0;
+//        printf("%s\n", regexp);
         len = strlen(regexp);
 
     	c_start = clock();
     	NFA_TRACER* state;
-//        printf("%s\nlength = %d\n", regexp, len);
 
         // Begin parsing input into NFA
         for(int i=0;i<len;i++)
@@ -558,19 +563,7 @@ int main()
             adjMatrix[i] = (long long*)calloc(DID, sizeof(long long));
         }
 
-//////////////////////////////////////////////////////////////////////////////////////
-//Debugging
-//		puts("\nnfa");
-//		for(it_nfa = NFA_GRAPH.begin(); it_nfa!=NFA_GRAPH.end();it_nfa++)
-//		{
-//			it_nfa->second->Debug(finish->id);
-//		}
-//		puts("\ndfa");
-//		for(it_dfa = DFA_GRAPH.begin(); it_dfa!=DFA_GRAPH.end();it_dfa++)
-//		{
-//			it_dfa->second->Debug(finish->id);
-//		}
-////////////////////////////////////////////////////////////////////////////////////
+
 		DFA_VERTEX *dv, *dv2;
 		for(it_dfa = DFA_GRAPH.begin(); it_dfa!=DFA_GRAPH.end(); it_dfa++)
         {
@@ -584,6 +577,28 @@ int main()
                 }
             }
         }
+//////////////////////////////////////////////////////////////////////////////////////
+////Debugging
+//		puts("\nnfa");
+//		for(it_nfa = NFA_GRAPH.begin(); it_nfa!=NFA_GRAPH.end();it_nfa++)
+//		{
+//			it_nfa->second->Debug(finish->id);
+//		}
+//		puts("\ndfa");
+//		for(it_dfa = DFA_GRAPH.begin(); it_dfa!=DFA_GRAPH.end();it_dfa++)
+//		{
+//			it_dfa->second->Debug(finish->id);
+//		}
+//		puts("\nprinting adj matrix");
+//		for(int i=0;i<DID;i++)
+//        {
+//            for(int j=0;j<DID;j++)
+//            {
+//                printf("%I64d ", adjMatrix[i][j]);
+//            }
+//            puts("");
+//        }
+////////////////////////////////////////////////////////////////////////////////////////
 
         c_end = clock();
         dfa_time = (c_end - c_start) / static_cast<double>( CLOCKS_PER_SEC );
@@ -598,7 +613,7 @@ int main()
             }
 
         }
-        printf("%I64d\n", hasil%1000000007);
+        printf("%I64d\n", hasil%MOD);
 
         c_end = clock();
         matmul_time = (c_end - c_start) / static_cast<double>( CLOCKS_PER_SEC );
@@ -606,7 +621,10 @@ int main()
     }
     c_end = clock();
     all_time = (c_end - all_start) / static_cast<double>( CLOCKS_PER_SEC );
-    printf("Total elapsed time = %f\n", all_time);
+//printf("Total elapsed time = %f\n", all_time);
 
     return 0;
 }
+
+
+//(b|((a*)b)) 30

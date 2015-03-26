@@ -414,15 +414,15 @@ int main()
             }
         }
         long long** res;
-        res = ExpMatrix(adjMatrix, N);
+//        res = ExpMatrix(adjMatrix, N);
         long long hasil=0;
-        for(it=DFA_GRAPH.begin();it != DFA_GRAPH.end(); it++)
-        {
-            if(it->second->label.count(finish->id))
-            {
-                hasil += res[0][it->second->id];
-            }
-        }
+//        for(it=DFA_GRAPH.begin();it != DFA_GRAPH.end(); it++)
+//        {
+//            if(it->second->label.count(finish->id))
+//            {
+//                hasil += res[0][it->second->id];
+//            }
+//        }
         printf("%lld\n", hasil % 1000000007);
     }
 

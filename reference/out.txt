@@ -1,3 +1,4 @@
+elapsed time = 0.000000 begin
 93933836
 93933836
 93933836
@@ -48,7 +49,4 @@
 93933836
 93933836
 93933836
-time a: 0.000000
-time b: 0.000000
-time c: 0.000000
-elapsed time = 0.000000 end
+elapsed time = 0.188000 end
