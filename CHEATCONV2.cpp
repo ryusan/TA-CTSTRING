@@ -3,7 +3,6 @@
 #include <map>
 #include <algorithm>
 #include <stack>
-#include <queue>
 #include <cstring>
 #include <set>
 
@@ -57,24 +56,24 @@ struct nfa_vertex
         for( int i=0; i<3; ++i )
             next[i].clear();
     }
-//    void Debug(int start, int finish)
-//	{
-//		for(int i=0 ;i<3;i++)
-//		{
-//			for(unsigned j=0;j<next[i].size();j++)
-//			{
-//				printf("%d -> %d [label=\"%c\"];\n", this->id, next[i][j]->id, (i!=2 ? i+'a':'e'));
-//			}
-//		}
-//		if(this->id == finish)
-//		{
-//			printf("%d [shape=\"doublecircle\"];\n", id);
-//		}
-//		if(this->id == start)
-//        {
-//            printf("%d [label=\"start\"];\n", id);
-//        }
-//	}
+    void Debug(int start, int finish)
+	{
+		for(int i=0 ;i<3;i++)
+		{
+			for(unsigned j=0;j<next[i].size();j++)
+			{
+				printf("%d -> %d [label=\"%c\"];\n", this->id, next[i][j]->id, (i!=2 ? i+'a':'e'));
+			}
+		}
+		if(this->id == finish)
+		{
+			printf("%d [shape=\"doublecircle\"];\n", id);
+		}
+		if(this->id == start)
+        {
+            printf("%d [label=\"start\"];\n", id);
+        }
+	}
 };
 
 
@@ -103,18 +102,18 @@ struct dfa_vertex
         }
     }
 
-//    void Debug(int id)
-//	{
-//		if(label.count(id))
-//		{
-//			printf("%d [shape=\"doublecircle\"]\n", this->id);
-//		}
-//		for(int i=0 ;i<2;i++)
-//		{
-//			if(next[i] != NULL)
-//				printf("%d -> %d [label=\"%c\"];\n", this->id, next[i]->id, i+'a');
-//		}
-//	}
+    void Debug(int id)
+	{
+		if(label.count(id))
+		{
+			printf("%d [shape=\"doublecircle\"]\n", this->id);
+		}
+		for(int i=0 ;i<2;i++)
+		{
+			if(next[i] != NULL)
+				printf("%d -> %d [label=\"%c\"];\n", this->id, next[i]->id, i+'a');
+		}
+	}
 };
 
 void move_closure(set<int> &retval, set<int> ins, int character)
@@ -144,25 +143,25 @@ void create_dfa(dfa_vertex* &dv, set<int> label)
 
 void eps_closure(set<int> &retval)
 {
-    queue<int> qu;
+    stack<int> st;
     set<int>::iterator it;
     int tmp;
     for( it=retval.begin(); it!=retval.end(); ++it )
     {
-        qu.push(*it);
+        st.push(*it);
     }
-    while(!qu.empty())
+    while(!st.empty())
     {
-        for(unsigned i=0; i<nfamap[qu.front()]->next[2].size(); ++i )
+        int t = st.top(); st.pop();
+        for(unsigned i=0; i<nfamap[t]->next[2].size(); ++i )
         {
-            tmp = nfamap[qu.front()]->next[2][i]->id;
+            tmp = nfamap[t]->next[2][i]->id;
             if(!retval.count(tmp))
             {
-                qu.push(tmp);
+                st.push(tmp);
                 retval.insert(tmp);
             }
         }
-        qu.pop();
     }
 }
 
@@ -273,33 +272,33 @@ int main()
 
         retval.insert(start);
         eps_closure(retval);
-        dfa_vertex* tmp;
-        dfa_vertex* initial_dfa;
+        dfa_vertex *tmp, *tmp1;
+        dfa_vertex *initial_dfa;
 
         create_dfa(tmp, retval);
         visited.insert(tmp->id);
         initial_dfa = tmp;
-        queue<dfa_vertex*> qu;
-        qu.push(tmp);
-        while(!qu.empty())
+        stack<dfa_vertex*> st;
+        st.push(tmp);
+        while(!st.empty())
         {
+            tmp = st.top(); st.pop();
             for( int i=0; i<2; ++i )
             {
-                move_closure(retval,qu.front()->label, i);
+                move_closure(retval,tmp->label, i);
                 eps_closure(retval);
                 if(retval.size()==0)
                     continue;
-                create_dfa(tmp,retval);
-                qu.front()->next[i] = tmp;
-                if(visited.count(tmp->id)==0)
+                create_dfa(tmp1,retval);
+                tmp->next[i] = tmp1;
+                if(visited.count(tmp1->id)==0)
                 {
-                    visited.insert(tmp->id);
-                    qu.push(tmp);
+                    visited.insert(tmp1->id);
+                    st.push(tmp1);
                 }
             }
-            qu.pop();
         }
-
+//Debug
 //        for( int i=0; i<nfa_id ; ++i )
 //        {
 //            nfamap[i]->Debug(start,finish);

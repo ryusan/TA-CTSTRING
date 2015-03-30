@@ -55,7 +55,7 @@ void expand(int index)
 int main()
 {
 	srand(time(NULL));
-	int i=10000;
+	int i=100;
     char kar[] = {'a', 'b'};
 
 //	printf("50\n");
@@ -67,8 +67,8 @@ int main()
 		while((len = strlen(hasil)) < 110)
 			expand(rand() % len);
 
-		printf("%s\n%d\n", hasil, 3);
-		for(int k=0;k<3;k++){
+		printf("%s\n%d\n", hasil, 10);
+		for(int k=0;k<10;k++){
             int len = rand()%51;
             for(int j=0;j<len;j++)
             {
