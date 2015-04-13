@@ -6,7 +6,6 @@
 #include <cstring>
 #include <set>
 
-#define MOD 1000000007
 
 using namespace std;
 
@@ -116,6 +115,18 @@ struct dfa_vertex
 	}
 };
 
+void create_dfa(dfa_vertex* &dv, set<int> label)
+{
+    if(dfamap.count(label))
+    {
+        dv = dfamap[label];
+    }
+    else
+    {
+        dv = new dfa_vertex(label);
+    }
+}
+
 void move_closure(set<int> &retval, set<int> ins, int character)
 {
     retval.clear();
@@ -126,18 +137,6 @@ void move_closure(set<int> &retval, set<int> ins, int character)
         {
             retval.insert(nfamap[*it]->next[character][i]->id);
         }
-    }
-}
-
-void create_dfa(dfa_vertex* &dv, set<int> label)
-{
-    if(dfamap.count(label))
-    {
-        dv = dfamap[label];
-    }
-    else
-    {
-        dv = new dfa_vertex(label);
     }
 }
 
@@ -251,9 +250,14 @@ int main()
                     {
                         operan2 = states.top(); states.pop();
                         nfa_vertex* st = new nfa_vertex;
+                        nfa_vertex* ed = new nfa_vertex;
+
                         st->next[2].push_back(nfamap[operan2.id_first]);
-                        nfamap[operan2.id_last]->next[2].push_back(st);
-                        states.push(nfa_states(st->id, st->id));
+                        st->next[2].push_back(ed);
+
+                        nfamap[operan2.id_last]->next[2].push_back(ed);
+                        nfamap[operan2.id_last]->next[2].push_back(nfamap[operan2.id_first]);
+                        states.push(nfa_states(st->id, ed->id));
                     }
                     break;
                 }
@@ -298,17 +302,17 @@ int main()
                 }
             }
         }
-//Debug
-//        for( int i=0; i<nfa_id ; ++i )
-//        {
-//            nfamap[i]->Debug(start,finish);
-//        }
-//        map<set<int>, dfa_vertex*>::iterator it_dfa;
-//		puts("\ndfa");
-//		for(it_dfa = dfamap.begin(); it_dfa!=dfamap.end(); ++it_dfa)
-//		{
-//			it_dfa->second->Debug(finish);
-//		}
+//      Debug
+        for( int i=0; i<nfa_id ; ++i )
+        {
+            nfamap[i]->Debug(start,finish);
+        }
+        map<set<int>, dfa_vertex*>::iterator it_dfa;
+        puts("\ndfa");
+        for(it_dfa = dfamap.begin(); it_dfa!=dfamap.end(); ++it_dfa)
+        {
+            it_dfa->second->Debug(finish);
+        }
 
         while(t--)
         {
@@ -320,13 +324,14 @@ int main()
             int i;
             for(i=0; i<len; ++i )
             {
-                if(tmp->next[query[i]-'a'] != NULL)
-                    tmp = tmp->next[query[i]-'a'];
-                else
+                tmp = tmp->next[query[i]-'a'];
+                if( tmp==NULL )
                     break;
             }
-            if(i!=len || !tmp->label.count(finish)) printf("N\n");
-            else printf("Y\n");
+            if(i!=len || !tmp->label.count(finish))
+                printf("N\n");
+            else
+                printf("Y\n");
         }
         puts("");
     }
