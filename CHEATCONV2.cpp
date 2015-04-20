@@ -6,7 +6,6 @@
 #include <cstring>
 #include <set>
 
-
 using namespace std;
 
 struct dfa_vertex;
@@ -70,11 +69,10 @@ struct nfa_vertex
 		}
 		if(this->id == start)
         {
-            printf("%d [label=\"start\"];\n", id);
+            printf("%d [label=\"start>%d\"];\n", id, id);
         }
 	}
 };
-
 
 struct dfa_vertex
 {
@@ -107,6 +105,16 @@ struct dfa_vertex
 		{
 			printf("%d [shape=\"doublecircle\"]\n", this->id);
 		}
+        printf("%d [label=\"", this->id);
+        set<int>::iterator t;
+        for(t=label.begin();t!=label.end();t++)
+        {
+            if(t==label.begin())
+                printf("%d", *t);
+            else
+                printf(",%d", *t);
+        }
+        printf("\"];\n");
 		for(int i=0 ;i<2;i++)
 		{
 			if(next[i] != NULL)
@@ -302,7 +310,7 @@ int main()
                 }
             }
         }
-//      Debug
+////      Debug
         for( int i=0; i<nfa_id ; ++i )
         {
             nfamap[i]->Debug(start,finish);
