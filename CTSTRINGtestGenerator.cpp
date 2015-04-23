@@ -66,6 +66,6 @@ int main()
 		while((len = strlen(hasil)) < 110)
 			expand(rand() % len);
 
-		printf("%s %d\n", hasil, 900874928);
+		printf("%s %d\n", hasil, (rand()%1000+1)*(rand()%1000+1)*(rand()%1000+1));
 	}
 }

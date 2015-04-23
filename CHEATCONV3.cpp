@@ -170,56 +170,6 @@ int AddToGraph(labelset<int> _label)
     return DID-1;
 }
 
-void MatrixMul(long long** y, long long** z)
-{
-    long long x[DID][DID];
-    int i,j,k;
-    for(i=0;i<DID;i++)
-    {
-        for(j=0;j<DID;j++)
-        {
-            x[i][j]=0LL;
-        }
-    }
-    for(i=0;i<DID;i++)
-    {
-        for(j=0;j<DID;j++)
-        {
-            for(k=0;k<DID;k++)
-            {
-                if(y[i][k] == 0 || z[k][j] == 0 ) continue;
-                x[i][j]=(x[i][j]+((y[i][k])*(z[k][j])))%MOD;
-            }
-        }
-    }
-    for(i=0;i<DID;i++)
-    {
-        for(j=0;j<DID;j++)
-        {
-            y[i][j]=x[i][j];
-        }
-    }
-}
-
-void ExpMatrix(long long** awal, int exp, long long** x)
-{
-    for(int i=0;i<DID;i++)
-    {
-        for(int j=0;j<DID;j++)
-        {
-            x[i][j]=(i==j);
-        }
-    }
-    while(exp){
-        if (exp&1)
-        {
-            MatrixMul(x, awal);
-        }
-        MatrixMul(awal, awal);
-        exp>>=1;
-    }
-}
-
 void reset()
 {
     NID = 0;
@@ -248,24 +198,12 @@ int main()
 
     stack<char> ops;
 
-    for(scanf("%d", &test);test--;)
+    for(;scanf("%s", input)!=EOF;)
     {
         reset();
-        scanf("%s %d", in, &N);
-        len = strlen(in);
-
-        int iter=0;
-        for(int i=0;i<len; i++)
-        {
-            if(i!=0 && ( in[i]=='(' || in[i]=='a' || in[i] == 'b') && (in[i-1]==')' || in[i-1]=='a' || in[i-1]=='b'))
-            {
-                input[iter++]='.';
-            }
-            input[iter++]=in[i];
-        }
-        input[iter]=0;
+        scanf("%d", &N);
+        getchar();
         len = strlen(input);
-        // Begin parsing input into NFA
         for(int i=0;i<len;i++)
         {
             switch(input[i])
@@ -364,39 +302,22 @@ int main()
                 }
             }
         }
-
-        // Create adjacency matrix from DFA Graph.
-        long long** adjMatrix, **result;
-        adjMatrix = (long long**)calloc(DID, sizeof(long long*));
-        result = (long long**)calloc(DID, sizeof(long long*));
-        for(int i=0;i<DID;i++)
+        while(N--)
         {
-            adjMatrix[i] = (long long*)calloc(DID, sizeof(long long));
-            result[i] = (long long*)calloc(DID, sizeof(long long));
-        }
-		for(it_dfa = DFA_GRAPH.begin(); it_dfa!=DFA_GRAPH.end(); it_dfa++)
-        {
-            dv = it_dfa->second;
-            for(int i=0;i<2;i++)
+            int i;
+            tmp = initDFA;
+            gets(in);
+            len = strlen(in);
+            for(i=0;i<len;i++)
             {
-                dv2 = dfa[dv][i];
-                if( dv2 !=-1 )
-                {
-                    adjMatrix[dv][dv2]++;
-                }
+                tmp = dfa[tmp][in[i]-'a'];
+                if(tmp == -1)
+                    break;
             }
+            if(i!=len || !dfa_label[tmp].count(finish)) printf("N\n");
+            else printf("Y\n");
         }
-        ExpMatrix(adjMatrix, N, result);
-        long long hasil = 0;
-        for(it_dfa=DFA_GRAPH.begin();it_dfa != DFA_GRAPH.end(); it_dfa++)
-        {
-            if(dfa_label[it_dfa->second].count(finish))
-            {
-                hasil += result[0][it_dfa->second];
-            }
-
-        }
-        printf("%I64d\n", hasil%MOD);
+        printf("\n");
     }
     return 0;
 }

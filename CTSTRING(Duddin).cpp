@@ -357,9 +357,10 @@ void matmul(LL **x, LL **y)
 
 	for(a=0; a<dfasize; a++)
         for(c=0; c<dfasize; c++)
-            for(b=0; b<dfasize; b++)
+            for(b=0; b<dfasize; b++){
                 if ((z[a][b] += x[a][c]*y[c][b]) > MOD)
                     z[a][b] %= MOD;
+            }
 
 	for(a=0; a<dfasize; a++)
         for(b=0; b<dfasize; b++)
