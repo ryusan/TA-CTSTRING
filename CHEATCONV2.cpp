@@ -261,11 +261,8 @@ int main()
                         nfa_vertex* ed = new nfa_vertex;
 
                         st->next[2].push_back(nfamap[operan2.id_first]);
-                        st->next[2].push_back(ed);
-
-                        nfamap[operan2.id_last]->next[2].push_back(ed);
-                        nfamap[operan2.id_last]->next[2].push_back(nfamap[operan2.id_first]);
-                        states.push(nfa_states(st->id, ed->id));
+                        nfamap[operan2.id_last]->next[2].push_back(st);
+                        states.push(nfa_states(st->id, st->id));
                     }
                     break;
                 }

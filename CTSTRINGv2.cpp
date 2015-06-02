@@ -6,22 +6,19 @@
 #include <stack>
 #include <vector>
 
-#define MOD 1000000007
-#define MNODE 200
+#define MOD_CONSTANT 1000000007
+#define MAX_NODE 200
 
 using namespace std;
 
-int NID = 0;
-int DID = 0;
-
 template <typename T>
-struct labelset{
+struct dfa_label{
     unsigned long long hash_id;
     T dt[101];
     int data;
 
 	// initialize label without id
-	labelset()
+	dfa_label()
     {
         hash_id = 0;
         data = 0;
@@ -31,7 +28,7 @@ struct labelset{
 
 	// struct comparator with '==' operator
 	// if dt equal return true, else return false
-    bool operator==(const labelset &o) const
+    bool operator==(const dfa_label &o) const
 	{
 		return hash_id == o.hash_id;
     }
@@ -40,7 +37,7 @@ struct labelset{
     // if |data| < cmp.|data| ret true;
 	// if data[i] < cmp.data[i] ret true;
 	// else ret false;
-	bool operator<(const labelset &o) const
+	bool operator<(const dfa_label &o) const
 	{
             return hash_id < o.hash_id;
     }
@@ -112,25 +109,28 @@ struct pairint
 };
 
 stack<pairint> states;
-vector<int> nfa_nodes[MNODE][3];
-int dfa[MNODE][2];
-labelset<int> dfa_label[MNODE];
-map<labelset<int>, int> DFA_GRAPH;
+vector<int> nfa_nodes[MAX_NODE][3];
+map<dfa_label<int>, int> dfa_graph;
+dfa_label<int> dfa_lbl[MAX_NODE];
+int dfa[MAX_NODE][2];
+int nid = 0;
+int did = 0;
+pairint operan1, operan2, state;
 
-void Move(labelset<int> node, int character, labelset<int> &retval)
+void MoveClosure(dfa_label<int> node, int symbol, dfa_label<int> &retval)
 {
     retval.clear();
     for( int i=0; i<node.data; i++)
     {
-        for(int j=0;j<nfa_nodes[node.dt[i]][character].size();j++)
+        for(int j=0;j<nfa_nodes[node.dt[i]][symbol].size();j++)
         {
-            retval.push(nfa_nodes[node.dt[i]][character][j]);
+            retval.push(nfa_nodes[node.dt[i]][symbol][j]);
         }
     }
 	retval.CalculateHash();
 }
 
-void EpsMove(labelset<int> &retval)
+void EpsilonClosure(dfa_label<int> &retval)
 {
     stack<int> nodes;
     int tmp;
@@ -155,80 +155,80 @@ void EpsMove(labelset<int> &retval)
 	retval.CalculateHash();
 }
 
-int AddToGraph(labelset<int> _label)
+int CreateDFAState(dfa_label<int> label)
 {
-	if(DFA_GRAPH.count(_label) == 1)
-		return DFA_GRAPH[_label];
+	if(dfa_graph.count(label) == 1)
+		return dfa_graph[label];
 
-    for(int i=0;i<_label.data;i++)
+    for(int i=0;i<label.data;i++)
     {
-        dfa_label[DID].push(_label.dt[i]);
+        dfa_lbl[did].push(label.dt[i]);
     }
-    dfa_label[DID].CalculateHash();
-    DFA_GRAPH[dfa_label[DID]] = DID;
-    DID++;
-    return DID-1;
+    dfa_lbl[did].CalculateHash();
+    dfa_graph[dfa_lbl[did]] = did;
+    did++;
+    return did-1;
 }
 
-void MatrixMul(long long** y, long long** z)
+void MatrixMultiply(long long** mat1, long long** mat2)
 {
-    long long x[DID][DID];
+    long long result[did][did];
     int i,j,k;
-    for(i=0;i<DID;i++)
+    for(i=0;i<did;i++)
     {
-        for(j=0;j<DID;j++)
+        for(j=0;j<did;j++)
         {
-            x[i][j]=0LL;
+            result[i][j]=0LL;
         }
     }
-    for(i=0;i<DID;i++)
+    for(i=0;i<did;i++)
     {
-        for(j=0;j<DID;j++)
+        for(j=0;j<did;j++)
         {
-            for(k=0;k<DID;k++)
+            for(k=0;k<did;k++)
             {
-                if(y[i][k] == 0 || z[k][j] == 0 ) continue;
-                x[i][j]=(x[i][j]+((y[i][k])*(z[k][j])))%MOD;
+                if(mat1[i][k] == 0 || mat2[k][j] == 0 ) continue;
+                result[i][j]=(result[i][j]+((mat1[i][k])*(mat2[k][j])))%MOD_CONSTANT;
             }
         }
     }
-    for(i=0;i<DID;i++)
+    for(i=0;i<did;i++)
     {
-        for(j=0;j<DID;j++)
+        for(j=0;j<did;j++)
         {
-            y[i][j]=x[i][j];
+            mat1[i][j]=result[i][j];
         }
     }
 }
 
-void ExpMatrix(long long** awal, int exp, long long** x)
+void MatrixPower(long long** adjM, int L, long long** result)
 {
-    for(int i=0;i<DID;i++)
+    for(int i=0;i<did;i++)
     {
-        for(int j=0;j<DID;j++)
+        for(int j=0;j<did;j++)
         {
-            x[i][j]=(i==j);
+            result[i][j]=(i==j);
         }
     }
-    while(exp){
-        if (exp&1)
+    while(L){
+        if (L&1)
         {
-            MatrixMul(x, awal);
+            MatrixMultiply(result, adjM);
         }
-        MatrixMul(awal, awal);
-        exp>>=1;
+        MatrixMultiply(adjM, adjM);
+        L>>=1;
     }
 }
 
 void reset()
 {
-    NID = 0;
-    DID = 0;
+    nid = 0;
+    did = 0;
 
     memset(dfa, -1, sizeof(dfa));
-    memset(dfa_label, 0, sizeof(dfa_label));
+    memset(dfa_lbl, 0, sizeof(dfa_lbl));
 
-    for(int i=0;i<MNODE;i++)
+    for(int i=0;i<MAX_NODE;i++)
     {
         for(int j=0;j<3;j++)
         {
@@ -237,36 +237,30 @@ void reset()
     }
     while(!states.empty())
         states.pop();
-    DFA_GRAPH.clear();
+    dfa_graph.clear();
 }
 
-int main()
+void Preprocess(char in[], char input[])
 {
-    char in[121], input[222], op;
-    int test, len, N, dv, dv2;
-    pairint operan1, operan2, state;
-
-    stack<char> ops;
-
-    for(scanf("%d", &test);test--;)
+    int len = strlen(in);
+    int iter=0;
+    for(int i=0;i<len; i++)
     {
-        reset();
-        scanf("%s %d", in, &N);
-        len = strlen(in);
-
-        int iter=0;
-        for(int i=0;i<len; i++)
+        if(i!=0 && ( in[i]=='(' || in[i]=='a' || in[i] == 'b') && (in[i-1]==')' || in[i-1]=='a' || in[i-1]=='b'))
         {
-            if(i!=0 && ( in[i]=='(' || in[i]=='a' || in[i] == 'b') && (in[i-1]==')' || in[i-1]=='a' || in[i-1]=='b'))
-            {
-                input[iter++]='.';
-            }
-            input[iter++]=in[i];
+            input[iter++]='.';
         }
-        input[iter]=0;
-        len = strlen(input);
-        // Begin parsing input into NFA
-        for(int i=0;i<len;i++)
+        input[iter++]=in[i];
+    }
+    input[iter]=0;
+}
+
+void ConvertREtoNFA(char input[])
+{
+    int len = strlen(input);
+    stack<char> ops;
+    char op;
+    for(int i=0;i<len;i++)
         {
             switch(input[i])
             {
@@ -276,9 +270,9 @@ int main()
             case 'a':
             case 'b':
                 {
-                    nfa_nodes[NID][input[i]-'a'].push_back(NID+1);
-                    states.push(pairint(NID, NID+1));
-                    NID+=2;
+                    nfa_nodes[nid][input[i]-'a'].push_back(nid+1);
+                    states.push(pairint(nid, nid+1));
+                    nid+=2;
                 }
                 break;
             case ')':
@@ -295,12 +289,12 @@ int main()
                         operan2 = states.top(); states.pop();
                         operan1 = states.top(); states.pop();
 
-                        nfa_nodes[NID][2].push_back(operan1.a);
-                        nfa_nodes[NID][2].push_back(operan2.a);
-                        nfa_nodes[operan1.b][2].push_back(NID+1);
-                        nfa_nodes[operan2.b][2].push_back(NID+1);
-                        states.push(pairint(NID, NID+1));
-                        NID+=2;
+                        nfa_nodes[nid][2].push_back(operan1.a);
+                        nfa_nodes[nid][2].push_back(operan2.a);
+                        nfa_nodes[operan1.b][2].push_back(nid+1);
+                        nfa_nodes[operan2.b][2].push_back(nid+1);
+                        states.push(pairint(nid, nid+1));
+                        nid+=2;
                     }
                     break;
                 case '.':
@@ -314,10 +308,10 @@ int main()
                 case '*':
                     {
                         operan2 = states.top(); states.pop();
-                        nfa_nodes[NID][2].push_back(operan2.a);
-                        nfa_nodes[operan2.b][2].push_back(NID);
-                        states.push(pairint(NID, NID));
-                        NID++;
+                        nfa_nodes[nid][2].push_back(operan2.a);
+                        nfa_nodes[operan2.b][2].push_back(nid);
+                        states.push(pairint(nid, nid));
+                        nid++;
                     }
                     break;
                 }
@@ -327,54 +321,73 @@ int main()
                 ops.push(input[i]);
             }
         }
-        state = states.top();
-        states.pop();
+}
 
-        int start = state.a;
-        int finish = state.b;
+void ConvertNFAtoDFA(pairint state)
+{
+    int dv, initDFA, NFAstart = state.a, tmp;
+    stack<int> st;
 
-		labelset<int> visited;
-		labelset<int> retval;
+    dfa_label<int> visited;
+    dfa_label<int> retval;
 
-		map<labelset<int>, int>::iterator it_dfa;
+    retval.push(NFAstart);
+    EpsilonClosure(retval);
 
-        retval.push(start);
-        EpsMove(retval);
-        // Create DFA from NFA
-        int initDFA = AddToGraph(retval);
-		visited.push(initDFA);
-        stack<int> st;
-        st.push(initDFA);
-        int tmp;
-        while(st.empty() == false)
+    initDFA = CreateDFAState(retval);
+    visited.push(initDFA);
+    st.push(initDFA);
+    while(st.empty() == false)
+    {
+        dv = st.top();
+        st.pop();
+        for(int i=0; i<2; i++)
         {
-            dv = st.top();
-            st.pop();
-            for(int i=0; i<2; i++)
+            MoveClosure((dfa_lbl[dv]),i, retval);
+            EpsilonClosure(retval);
+            if(retval.data == 0) continue;
+            tmp = CreateDFAState(retval);
+            dfa[dv][i] = tmp;
+            if(visited.count(tmp) == 0)
             {
-                Move((dfa_label[dv]),i, retval);
-                EpsMove(retval);
-                if(retval.data == 0) continue;
-                tmp = AddToGraph(retval);
-                dfa[dv][i] = tmp;
-                if(visited.count(tmp) == 0)
-                {
-                    visited.push(tmp);
-                    st.push(tmp);
-                }
+                visited.push(tmp);
+                st.push(tmp);
             }
         }
-
+    }
+}
+int main()
+{
+    char regexp[121], input[222], op;
+    int dv, dv2, len, L, nfaFinish, test;
+    for(scanf("%d", &test);test--;)
+    {
+        // initialize Variables
+        reset();
+        // Input
+        scanf("%s %d", regexp, &L);
+        // Preprocess Input
+        Preprocess(regexp, input);
+        // Begin parsing RE into NFA
+        ConvertREtoNFA(input);
+        // Get NFA automaton
+        state = states.top();
+        states.pop();
+        nfaFinish = state.b;
+        // Convert NFA to DFA
+        ConvertNFAtoDFA(state);
         // Create adjacency matrix from DFA Graph.
         long long** adjMatrix, **result;
-        adjMatrix = (long long**)calloc(DID, sizeof(long long*));
-        result = (long long**)calloc(DID, sizeof(long long*));
-        for(int i=0;i<DID;i++)
+        map<dfa_label<int>, int>::iterator it_dfa;
+
+        adjMatrix = (long long**)calloc(did, sizeof(long long*));
+        result = (long long**)calloc(did, sizeof(long long*));
+        for(int i=0;i<did;i++)
         {
-            adjMatrix[i] = (long long*)calloc(DID, sizeof(long long));
-            result[i] = (long long*)calloc(DID, sizeof(long long));
+            adjMatrix[i] = (long long*)calloc(did, sizeof(long long));
+            result[i] = (long long*)calloc(did, sizeof(long long));
         }
-		for(it_dfa = DFA_GRAPH.begin(); it_dfa!=DFA_GRAPH.end(); it_dfa++)
+		for(it_dfa = dfa_graph.begin(); it_dfa!=dfa_graph.end(); it_dfa++)
         {
             dv = it_dfa->second;
             for(int i=0;i<2;i++)
@@ -386,17 +399,20 @@ int main()
                 }
             }
         }
-        ExpMatrix(adjMatrix, N, result);
-        long long hasil = 0;
-        for(it_dfa=DFA_GRAPH.begin();it_dfa != DFA_GRAPH.end(); it_dfa++)
+
+        // Perform matrix multiplication
+        MatrixPower(adjMatrix, L, result);
+        // sum cell of the matrix which have finish state of NFA
+        long long res = 0;
+        for(it_dfa=dfa_graph.begin();it_dfa != dfa_graph.end(); it_dfa++)
         {
-            if(dfa_label[it_dfa->second].count(finish))
+            if(dfa_lbl[it_dfa->second].count(nfaFinish))
             {
-                hasil += result[0][it_dfa->second];
+                res += result[0][it_dfa->second];
             }
 
         }
-        printf("%I64d\n", hasil%MOD);
+        printf("%I64d\n", res%MOD_CONSTANT);
     }
     return 0;
 }
