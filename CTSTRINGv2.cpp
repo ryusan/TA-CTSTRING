@@ -7,44 +7,44 @@
 #include <vector>
 
 #define MOD_CONSTANT 1000000007
-#define MAX_NODE 200
+#define MAX_NODE 5005
 
 using namespace std;
 
 template <typename T>
 struct dfa_label{
     unsigned long long hash_id;
-    T dt[101];
+    T dt[5005];
     int data;
 
-	// initialize label without id
-	dfa_label()
+    // initialize label without id
+    dfa_label()
     {
         hash_id = 0;
         data = 0;
     }
 
-	// initialize label with id
+    // initialize label with id
 
-	// struct comparator with '==' operator
-	// if dt equal return true, else return false
+    // struct comparator with '==' operator
+    // if dt equal return true, else return false
     bool operator==(const dfa_label &o) const
-	{
-		return hash_id == o.hash_id;
+    {
+        return hash_id == o.hash_id;
     }
 
-	// struct comparator with '==' operator
+    // struct comparator with '==' operator
     // if |data| < cmp.|data| ret true;
-	// if data[i] < cmp.data[i] ret true;
-	// else ret false;
-	bool operator<(const dfa_label &o) const
-	{
+    // if data[i] < cmp.data[i] ret true;
+    // else ret false;
+    bool operator<(const dfa_label &o) const
+    {
             return hash_id < o.hash_id;
     }
 
-	// insert new element to label
-	// check for duplicates and sort the element after insert
-	// if exists ret 0, else return 1
+    // insert new element to label
+    // check for duplicates and sort the element after insert
+    // if exists ret 0, else return 1
     bool push(T ins)
     {
         for(int i=0;i<data;i++)
@@ -55,11 +55,11 @@ struct dfa_label{
             }
         }
         dt[data++] = ins;
-		sort(dt,dt+data);
-		return true;
+        sort(dt,dt+data);
+        return true;
     }
 
-    void CalculateHash()
+    void calculateHash()
     {
         hash_id = 0;
         for(int i=0;i<data;i++)
@@ -68,8 +68,8 @@ struct dfa_label{
         }
     }
 
-	// check element in label
-	// if exists return 1, else return 0
+    // check element in label
+    // if exists return 1, else return 0
     bool count(T ins)
     {
         for(int i=0;i<data;i++)
@@ -82,7 +82,7 @@ struct dfa_label{
         return false;
     }
 
-	// return how much nodes in label
+    // return how much nodes in label
     int size()
     {
         return data;
@@ -90,32 +90,31 @@ struct dfa_label{
 
     void clear()
     {
-		hash_id = 0;
+        hash_id = 0;
         data = 0;
     }
 
 };
 
-struct pairint
+struct pair_int
 {
     int a;
     int b;
-    pairint(){ }
-    pairint(int _a, int _b)
+    pair_int(){ }
+    pair_int(int _a, int _b)
     {
         a = _a;
         b = _b;
     }
 };
 
-stack<pairint> states;
+stack<pair_int> states;
 vector<int> nfa_nodes[MAX_NODE][3];
 map<dfa_label<int>, int> dfa_graph;
 dfa_label<int> dfa_lbl[MAX_NODE];
 int dfa[MAX_NODE][2];
 int nid = 0;
 int did = 0;
-pairint operan1, operan2, state;
 
 void MoveClosure(dfa_label<int> node, int symbol, dfa_label<int> &retval)
 {
@@ -127,7 +126,7 @@ void MoveClosure(dfa_label<int> node, int symbol, dfa_label<int> &retval)
             retval.push(nfa_nodes[node.dt[i]][symbol][j]);
         }
     }
-	retval.CalculateHash();
+	retval.calculateHash();
 }
 
 void EpsilonClosure(dfa_label<int> &retval)
@@ -152,7 +151,7 @@ void EpsilonClosure(dfa_label<int> &retval)
             }
         }
     }
-	retval.CalculateHash();
+	retval.calculateHash();
 }
 
 int CreateDFAState(dfa_label<int> label)
@@ -164,10 +163,9 @@ int CreateDFAState(dfa_label<int> label)
     {
         dfa_lbl[did].push(label.dt[i]);
     }
-    dfa_lbl[did].CalculateHash();
+    dfa_lbl[did].calculateHash();
     dfa_graph[dfa_lbl[did]] = did;
-    did++;
-    return did-1;
+    return did++;
 }
 
 void MatrixMultiply(long long** mat1, long long** mat2)
@@ -220,14 +218,12 @@ void MatrixPower(long long** adjM, int L, long long** result)
     }
 }
 
-void reset()
+void Initialize()
 {
     nid = 0;
     did = 0;
-
     memset(dfa, -1, sizeof(dfa));
     memset(dfa_lbl, 0, sizeof(dfa_lbl));
-
     for(int i=0;i<MAX_NODE;i++)
     {
         for(int j=0;j<3;j++)
@@ -258,82 +254,78 @@ void Preprocess(char in[], char input[])
 void ConvertREtoNFA(char input[])
 {
     int len = strlen(input);
+    pair_int operan1, operan2;
     stack<char> ops;
     char op;
     for(int i=0;i<len;i++)
+    {
+        switch(input[i])
         {
-            switch(input[i])
+        case '(':
+               continue;
+            break;
+        case 'a':
+        case 'b':
             {
-            case '(':
-                   continue;
-                break;
-            case 'a':
-            case 'b':
+                nfa_nodes[nid][input[i]-'a'].push_back(nid+1);
+                states.push(pair_int(nid, nid+1));
+                nid+=2;
+            }
+            break;
+        case ')':
+            op = '-';
+            if(ops.empty() == false)
+            {
+                op = ops.top();
+                ops.pop();
+            }
+            switch(op)
+            {
+            case '|':
                 {
-                    nfa_nodes[nid][input[i]-'a'].push_back(nid+1);
-                    states.push(pairint(nid, nid+1));
+                    operan2 = states.top(); states.pop();
+                    operan1 = states.top(); states.pop();
+                    nfa_nodes[nid][2].push_back(operan1.a);
+                    nfa_nodes[nid][2].push_back(operan2.a);
+                    nfa_nodes[operan1.b][2].push_back(nid+1);
+                    nfa_nodes[operan2.b][2].push_back(nid+1);
+                    states.push(pair_int(nid, nid+1));
                     nid+=2;
                 }
                 break;
-            case ')':
-                op = '-';
-                if(ops.empty() == false)
+            case '.':
                 {
-                    op = ops.top();
-                    ops.pop();
-                }
-                switch(op)
-                {
-                case '|':
-                    {
-                        operan2 = states.top(); states.pop();
-                        operan1 = states.top(); states.pop();
-
-                        nfa_nodes[nid][2].push_back(operan1.a);
-                        nfa_nodes[nid][2].push_back(operan2.a);
-                        nfa_nodes[operan1.b][2].push_back(nid+1);
-                        nfa_nodes[operan2.b][2].push_back(nid+1);
-                        states.push(pairint(nid, nid+1));
-                        nid+=2;
-                    }
-                    break;
-                case '.':
-                    {
-                        operan2 = states.top(); states.pop();
-                        operan1 = states.top(); states.pop();
-                        nfa_nodes[operan1.b][2].push_back(operan2.a);
-                        states.push(pairint(operan1.a, operan2.b));
-                    }
-                    break;
-                case '*':
-                    {
-                        operan2 = states.top(); states.pop();
-                        nfa_nodes[nid][2].push_back(operan2.a);
-                        nfa_nodes[operan2.b][2].push_back(nid);
-                        states.push(pairint(nid, nid));
-                        nid++;
-                    }
-                    break;
+                    operan2 = states.top(); states.pop();
+                    operan1 = states.top(); states.pop();
+                    nfa_nodes[operan1.b][2].push_back(operan2.a);
+                    states.push(pair_int(operan1.a, operan2.b));
                 }
                 break;
-
-            default:
-                ops.push(input[i]);
+            case '*':
+                {
+                    operan2 = states.top(); states.pop();
+                    nfa_nodes[nid][2].push_back(operan2.a);
+                    nfa_nodes[operan2.b][2].push_back(nid);
+                    states.push(pair_int(nid, nid));
+                    nid++;
+                }
+                break;
             }
+            break;
+        default:
+            ops.push(input[i]);
         }
+    }
 }
 
-void ConvertNFAtoDFA(pairint state)
+void ConvertNFAtoDFA(pair_int state)
 {
     int dv, initDFA, NFAstart = state.a, tmp;
     stack<int> st;
-
     dfa_label<int> visited;
     dfa_label<int> retval;
-
     retval.push(NFAstart);
     EpsilonClosure(retval);
-
     initDFA = CreateDFAState(retval);
     visited.push(initDFA);
     st.push(initDFA);
@@ -356,14 +348,16 @@ void ConvertNFAtoDFA(pairint state)
         }
     }
 }
+
 int main()
 {
-    char regexp[121], input[222], op;
-    int dv, dv2, len, L, nfaFinish, test;
+    char regexp[10001], input[10001];
+    int dv, dv2, L, nfaFinish, test;
+    pair_int state;
     for(scanf("%d", &test);test--;)
     {
         // initialize Variables
-        reset();
+        Initialize();
         // Input
         scanf("%s %d", regexp, &L);
         // Preprocess Input

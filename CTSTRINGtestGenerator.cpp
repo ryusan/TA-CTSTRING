@@ -3,12 +3,12 @@
 #include <cstdlib>
 #include <ctime>
 
-char hasil[300];
+char hasil[10001];
 int len;
 
 void expand(int index)
 {
-	char temp[105];
+	char temp[10001];
 	temp[0] = 0;
 
 	while(hasil[index] != 'a' && hasil[index] != 'b')
@@ -55,17 +55,20 @@ void expand(int index)
 int main()
 {
 	srand(time(NULL));
-	int i=50;
-
-	printf("50\n");
+	int i=1;
+	int re[] = {40,105,170};
+	int L[] = {999999993,99999989,9999991};
+    int s = 1;
+    int t = 0;
+	printf("%d\n", i);
 	while(i--)
 	{
 		hasil[0] = 0;
 		strcat(hasil, "a");
 
-		while((len = strlen(hasil)) < 110)
+		while((len = strlen(hasil)) < re[s])
 			expand(rand() % len);
 
-		printf("%s %d\n", hasil, (rand()%1000+1)*(rand()%1000+1)*(rand()%1000+1));
+		printf("%s %d\n", hasil, L[t]);
 	}
 }
