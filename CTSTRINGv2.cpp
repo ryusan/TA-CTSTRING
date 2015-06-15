@@ -185,7 +185,7 @@ void MatrixMultiply(long long** mat1, long long** mat2)
         {
             for(k=0;k<did;k++)
             {
-                if(mat1[i][k] == 0 || mat2[k][j] == 0 ) continue;
+                //if(mat1[i][k] == 0 || mat2[k][j] == 0 ) continue;
                 result[i][j]=(result[i][j]+((mat1[i][k])*(mat2[k][j])))%MOD_CONSTANT;
             }
         }

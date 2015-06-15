@@ -14,7 +14,7 @@ void expand(int index)
 	while(hasil[index] != 'a' && hasil[index] != 'b')
 		index = (index+1) % len;
 
-	int operat = rand() % 3;//rand
+	int operat = rand() % 1;//rand
 	bool order = rand() % 2;//rand
 
 	switch(operat)
@@ -47,20 +47,21 @@ void expand(int index)
 		strcat(temp, hasil+index+1);
 		hasil[index] = 0;
 		strcat(hasil, temp);
-
 		break;
 	}
 }
 
-int main()
+int main(int argc, char *args[])
 {
+//    printf("%s\n", args[0]);
 	srand(time(NULL));
 	int i=1;
-	int re[] = {40,105,170};
-	int L[] = {999999993,99999989,9999991};
-    int s = 1;
-    int t = 0;
-	printf("%d\n", i);
+	int re[] = {10,20,30,40,50,60,70,80,90,100};
+	int L[] = {10,100,1000,10000,100000,1000000,10000000,100000000,1000000000};
+    int s = 9;
+    sscanf(args[1], "%d", &s);
+    int t = 1;
+	printf("%d\n", 1);
 	while(i--)
 	{
 		hasil[0] = 0;
@@ -68,7 +69,7 @@ int main()
 
 		while((len = strlen(hasil)) < re[s])
 			expand(rand() % len);
-
-		printf("%s %d\n", hasil, L[t]);
+//        for(int j=0;j<t;j++)
+            printf("%s %d\n", hasil, L[8]);
 	}
 }
